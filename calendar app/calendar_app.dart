@@ -160,7 +160,8 @@ class CustomCalendarState extends State<CalendarPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    tableCalendarController = PageController();
+    tableCalendarController = PageController(
+        initialPage: monthDifference(DateTime(2000, 1, 1), date));
   }
 
   bool isSameDay(DateTime? a, DateTime? b) {
@@ -168,31 +169,30 @@ class CustomCalendarState extends State<CalendarPage> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  List<DateTime?> generateCalendarDays(int year, int month) {
-    List<DateTime?> days = [];
-    DateTime firstDay = DateTime(year, month, 1);
-    int weekday = firstDay.weekday;
-    int daysInMonth = DateTime(year, month + 1, 0).day;
-    int emptyCells = weekday == 1 ? 0 : (weekday - 1);
-    for (int i = 0; i < emptyCells; i++) {
-      days.add(null);
-    }
-    for (int i = 1; i <= daysInMonth; i++) {
-      days.add(DateTime(year, month, i));
-    }
-    return days;
+  List<DateTime?> daysInMonth(DateTime date) {
+    final firstDay = DateTime(date.year, date.month, 1);
+    final lastDay = DateTime(date.year, date.month + 1, 0);
+
+    final days = List.generate(
+        lastDay.day, (i) => DateTime(date.year, date.month, i + 1));
+    int firstWeekday = (firstDay.weekday - 1) % 7;
+    final emptyStart = List<DateTime?>.filled(firstWeekday, null);
+    final totalDays = emptyStart + days;
+    final emptyEnd = List<DateTime?>.filled(42 - totalDays.length, null);
+    return totalDays + emptyEnd;
   }
 
-  void changeMonth(int delta) {
-    setState(() {
-      date = DateTime(date.year, date.month + delta, 1);
-    });
+  DateTime getDateFromIndex(int index) {
+    final initDate = DateTime(2000, 1, 1);
+    return DateTime(initDate.year + (index ~/ 12), (index % 12) + 1, 1);
+  }
+
+  int monthDifference(DateTime from, DateTime to) {
+    return (to.year - from.year) * 12 + (to.month - from.month);
   }
 
   @override
   Widget build(BuildContext context) {
-    List<DateTime?> days = generateCalendarDays(date.year, date.month);
-
     return Scaffold(
       backgroundColor: const Color(0xff2c3251), // Nền tối
       body: Column(
@@ -207,11 +207,12 @@ class CustomCalendarState extends State<CalendarPage> {
                   icon: const Icon(Icons.chevron_left, color: Colors.white),
                   onPressed: () {
                     setState(() {
+                      final currentPage = tableCalendarController.page!;
                       tableCalendarController.previousPage(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.bounceInOut,
                       );
-                      changeMonth(-1);
+                      date = getDateFromIndex((currentPage - 1) as int);
                     });
                   },
                 ),
@@ -223,11 +224,12 @@ class CustomCalendarState extends State<CalendarPage> {
                   icon: const Icon(Icons.chevron_right, color: Colors.white),
                   onPressed: () {
                     setState(() {
+                      final currentPage = tableCalendarController.page!;
                       tableCalendarController.nextPage(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeInOut,
                       );
-                      changeMonth(1);
+                      date = getDateFromIndex((currentPage + 1) as int);
                     });
                   },
                 ),
@@ -261,12 +263,14 @@ class CustomCalendarState extends State<CalendarPage> {
                   height: MediaQuery.of(context).size.height / 3,
                   child: PageView.builder(
                     controller: tableCalendarController,
-                    // onPageChanged: (index) {
-                    //   setState(() {
-                    //     date = getDateFromIndex(index);
-                    //   });
-                    // },
+                    onPageChanged: (index) {
+                      setState(() {
+                        date = getDateFromIndex(index);
+                      });
+                    },
                     itemBuilder: (context, index) {
+                      final currentMonth = getDateFromIndex(index);
+                      final days = daysInMonth(currentMonth);
                       return SizedBox(
                           child: GridView.builder(
                         shrinkWrap: true,
@@ -279,7 +283,7 @@ class CustomCalendarState extends State<CalendarPage> {
                                 childAspectRatio: 1.25),
                         itemCount: days.length,
                         itemBuilder: (context, index) {
-                          DateTime? day = days[index];
+                          final day = days[index];
                           bool isToday =
                               day != null && isSameDay(day, DateTime.now());
                           int colorState = selectedDays[day] ?? 0;
@@ -306,20 +310,18 @@ class CustomCalendarState extends State<CalendarPage> {
                                 shape: BoxShape.circle,
                               ),
                               alignment: Alignment.center,
-                              child: day != null
-                                  ? Text(
-                                      "${day.day}",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: isToday
-                                            ? Colors.black
-                                            : colorState > 0
-                                                ? Colors.white
-                                                : const Color(0xff666b88),
-                                      ),
-                                    )
-                                  : null,
+                              child: Text(
+                                day != null ? '${day.day}' : '',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isToday
+                                      ? Colors.black
+                                      : colorState > 0
+                                          ? Colors.white
+                                          : const Color(0xff666b88),
+                                ),
+                              ),
                             ),
                           );
                         },
