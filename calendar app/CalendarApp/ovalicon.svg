@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <filter color-interpolation-filters="sRGB" x="-10" y="-10" width="12" height="12" id="filter_1">
+            <feFlood flood-opacity="0" result="BackgroundImageFix_1" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" in="SourceAlpha" />
+            <feOffset dx="0" dy="2" />
+            <feGaussianBlur stdDeviation="5" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0.18 0 0 0 0 0.357 0 0 0 0 0.384 0 0 0 1 0" />
+            <feBlend mode="normal" in2="BackgroundImageFix_1" result="Shadow_2" />
+            <feBlend mode="normal" in="SourceGraphic" in2="Shadow_2" result="Shape_3" />
+        </filter>
+    </defs>
+    <g id="SingleElement">
+        <path id="Oval 3" d="M6 12C9.31371 12 12 9.31371 12 6C12 2.68629 9.31371 0 6 0C2.68629 0 0 2.68629 0 6C0 9.31371 2.68629 12 6 12Z" fill="#7FCFDC" fill-rule="evenodd" filter="url(#filter_1)" transform="translate(5 5)" />
+        <g>
+            <path id="Oval 3" d="M11 22C17.0751 22 22 17.0751 22 11C22 4.92487 17.0751 0 11 0C4.92487 0 0 4.92487 0 11C0 17.0751 4.92487 22 11 22Z" />
+            <path d="M22 11C22 17.0751 17.0751 22 11 22C4.92487 22 0 17.0751 0 11C0 4.92487 4.92487 0 11 0C17.0751 0 22 4.92487 22 11ZM18.0711 18.0711Q15.1421 21 11 21Q6.85786 21 3.92893 18.0711Q1 15.1421 1 11Q1 6.85786 3.92893 3.92893Q6.85786 1 11 1Q15.1421 1 18.0711 3.92893Q21 6.85786 21 11Q21 15.1421 18.0711 18.0711Z" fill="#89D5E2" fill-rule="evenodd" fill-opacity="0.3" />
+        </g>
+    </g>
+</svg>
