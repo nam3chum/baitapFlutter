@@ -1,758 +1,609 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'dart:async';
-
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 void main() {
   runApp(const MaterialApp(
-    home: Example(),
+    home: Calendar(),
   ));
 }
 
-class Object {
-  int index;
-  bool isChecked;
+// Tháng 1: January – Jan
+// Tháng 2: February – Feb
+// Tháng 3: March – Mar
+// Tháng 4: April – Apr
+// Tháng 5: May – May
+// Tháng 6: June – Jun
+// Tháng 7: July – Jul
+// Tháng 8: August – Aug
+// Tháng 9: September – Sep
+// Tháng 10: October – Oct
+// Tháng 11: November – Nov
+// Tháng 12: December – Dec
+Map<int, String> listMonth = {
+  1: "January",
+  2: "February",
+  3: "March",
+  4: "April",
+  5: "May",
+  6: "June",
+  7: "July",
+  8: " August",
+  9: "September",
+  10: "October",
+  11: "November",
+  12: "December"
+};
 
-  Object(this.index, this.isChecked);
-}
-
-class Example extends StatefulWidget {
-  const Example({super.key});
+class Calendar extends StatefulWidget {
+  const Calendar({super.key});
 
   @override
   State<StatefulWidget> createState() {
-    return ExampleState();
+    // TODO: implement createState
+    return CalendarState();
   }
 }
 
-class ExampleState extends State<Example> {
-  final scrollOffset = ScrollOffset();
-  late ScrollController _scrollController;
+class CalendarState extends State<Calendar> {
+  final PageController _pageAppController = PageController(initialPage: 1);
+  int indexOfAppPage = 1;
+  DateTime currentCalendarDate = DateTime.now();
 
-  Map<int, bool> checkedItems = {};
-  List<Object> items = List.generate(10, (index)=> Object(index,false));
-  bool isLoading = false;
-  bool hasMoreItems = true;
-  int maxItems = 34;
-  bool isShowButton = false;
-  int index = 0;
+  Map<DateTime, int> selectedDays = {};
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xff2a304d),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    indexOfAppPage = 0;
+                    _pageAppController.animateToPage(0,
+                        duration: const Duration(milliseconds: 1000), curve: Curves.linear);
+                  });
+                },
+                icon: SvgPicture.asset(
+                  'assets/CalendarApp/page1.svg',
+                  colorFilter: ColorFilter.mode(
+                      indexOfAppPage == 0 ? Colors.white : const Color(0xffC2C8E6).withOpacity(0.2),
+                      BlendMode.modulate),
+                ),
+              ),
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      indexOfAppPage = 1;
+                      _pageAppController.animateToPage(1,
+                          duration: const Duration(milliseconds: 1000), curve: Curves.linear);
+                    });
+                  },
+                  color:
+                      indexOfAppPage == 1 ? Colors.white : const Color(0xffC2C8E6).withOpacity(0.2),
+                  icon: const Icon(
+                    Icons.calendar_month_rounded,
+                  )),
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      indexOfAppPage = 2;
+                      _pageAppController.animateToPage(2,
+                          duration: const Duration(milliseconds: 1000), curve: Curves.linear);
+                    });
+                  },
+                  icon: Icon(
+                    Icons.bar_chart,
+                    color: indexOfAppPage == 2
+                        ? Colors.white
+                        : const Color(0xffC2C8E6).withOpacity(0.2),
+                  ))
+            ],
+          ),
+        ),
+        backgroundColor: const Color(0xff2a304d),
+        body: PageView(
+          controller: _pageAppController,
+          scrollDirection: Axis.horizontal,
+          onPageChanged: (index) {
+            setState(() {
+              indexOfAppPage = index;
+            });
+          },
+          children: [
+            //page 1
+            const Center(
+              child: Text(
+                "this is page 1",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            // page calendar
+            CalendarPage(
+              selectedDays: selectedDays,
+              initialDate: currentCalendarDate,
+              // Truyền giá trị ngày tháng vào
+              onDateChanged: (newDate) {
+                setState(() {
+                  currentCalendarDate = newDate; // Cập nhật trạng thái mới
+                });
+              },
+              onDayClicked: (day) {
+                setState(() {
+                  if (!selectedDays.containsKey(day)) {
+                    selectedDays[day] = 1;
+                  } else {
+                    selectedDays[day] = (selectedDays[day]! + 1) % 4;
+                  }
+                });
+              },
+            ),
+            //page bar_chart
+            BalancePage(),
+          ],
+        ));
+  }
+}
+
+class CalendarPage extends StatefulWidget {
+  final DateTime initialDate;
+  final Map<DateTime, int> selectedDays;
+  final Function(DateTime) onDateChanged;
+  final Function(DateTime) onDayClicked;
+
+  const CalendarPage({
+    super.key,
+    required this.initialDate,
+    required this.selectedDays,
+    required this.onDateChanged,
+    required this.onDayClicked,
+  });
+
+  @override
+  CustomCalendarState createState() => CustomCalendarState();
+}
+
+class CustomCalendarState extends State<CalendarPage> {
+  late DateTime date;
+
+  Map<DateTime, int> selectedDays = {};
+  final weekDays = ["M", "T", "W", "T", "F", "S", "S"];
+  late final PageController tableCalendarController;
+
+  //
   @override
   void initState() {
+    // TODO: implement initState
     super.initState();
-    _scrollController = ScrollController(initialScrollOffset: scrollOffset.offset);
-    _scrollController.addListener(_scrollListener);
+    date = widget.initialDate;
+    tableCalendarController =
+        PageController(initialPage: monthDifference(DateTime(2000, 1, 1), date));
   }
 
-  void _scrollListener() {
-    if (_scrollController.offset > 300 && !isShowButton) {
-      setState(() {
-        isShowButton = true;
-      });
-    } else if (_scrollController.offset <= 300 && isShowButton) {
-      setState(() {
-        isShowButton = false;
-      });
-    }
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 30 &&
-        !isLoading &&
-        hasMoreItems) {
-      _loadMoreData();
-    }
+  bool isSameDay(DateTime? a, DateTime? b) {
+    if (a == null || b == null) return false;
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  void _scrollToTop() {
-    _scrollController.animateTo(0, duration: const Duration(seconds: 2), curve: Curves.easeInOut);
+  // List<DateTime?> daysInMonth(DateTime date) {
+  //   final firstDay = DateTime(date.year, date.month, 1);
+  //   final lastDay = DateTime(date.year, date.month + 1, 0);
+  //
+  //   final days = List.generate(
+  //       lastDay.day, (i) => DateTime(date.year, date.month, i + 1));
+  //   int firstWeekday = (firstDay.weekday - 1) % 7;
+  //   final emptyStart = List<DateTime?>.filled(firstWeekday, null);
+  //   final totalDays = emptyStart + days;
+  //   final emptyEnd = List<DateTime?>.filled(42 - totalDays.length, null);
+  //   return totalDays + emptyEnd;
+  // }
+
+  DateTime getDateFromIndex(int index) {
+    return DateTime(2000 + (index ~/ 12), (index % 12) + 1, 1);
   }
 
-  Future<void> _loadMoreData() async {
-    if (!hasMoreItems || isLoading) return;
-    setState(() {
-      isLoading = true;
-    });
-    await Future.delayed(const Duration(seconds: 3));
-    int remainingItems = maxItems - items.length;
-    int loadItem = remainingItems > 10 ? 10 : remainingItems;
-    if (items.length < maxItems) {
-      List<Object> newItems = List.generate(loadItem, (index) => Object(index, false));
-      setState(() {
-        items.addAll(newItems);
-      });
-    }
-    setState(() {
-      isLoading = false;
-      if (items.length >= maxItems) {
-        hasMoreItems = false;
-      }
-    });
+  int monthDifference(DateTime from, DateTime to) {
+    return (to.year - from.year) * 12 + to.month - from.month;
   }
 
-  @override
-  void dispose() {
-    scrollOffset.offset = _scrollController.offset;
-    _scrollController.dispose();
-    super.dispose();
+  List<DateTime?> generateCalendarDays(int year, int month) {
+    DateTime firstDay = DateTime(year, month, 1);
+    int weekday = firstDay.weekday;
+    int daysInMonth = DateTime(year, month + 1, 0).day;
+    int emptyCells = (weekday == 1) ? 0 : (weekday - 1);
+    List<DateTime?> days = List.filled(emptyCells, null, growable: true);
+    days.addAll(List.generate(daysInMonth, (i) => DateTime(year, month, i + 1)));
+    return days;
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
+    final size = MediaQuery.of(context).size;
     return Scaffold(
-        appBar: AppBar(
-          actions: [
-            IconButton(
-                onPressed: () {
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (context) => const SortableCheckList()));
-                },
-                icon: const Icon(Icons.arrow_right_alt_sharp))
-          ],
-        ),
-        body: buildPageItem());
-  }
-
-  Widget buildPageItem() {
-    return Stack(
-      children: [
-        ListView.separated(
-          separatorBuilder: (context, index) => const SizedBox(
-            height: 40,
-          ),
-          controller: _scrollController,
-          itemCount: items.length + (hasMoreItems ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index < items.length) {
-              return CheckboxListTile(
-                title: Text("Title ${index + 1}"),
-                value: items[index].isChecked,
-                onChanged: (value) {
-                  setState(() {
-                    items[index].isChecked = value ?? false;
-                  });
-                },
-              );
-            } else if (hasMoreItems) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-            return const Center();
-          },
-        ),
-        if (isShowButton)
-          Positioned(
-            top: 5,
-            left: MediaQuery.of(context).size.width / 2 - 20,
-            child: GestureDetector(
-              onTapDown: (_) => _scrollToTop(),
-              child: SvgPicture.asset(
-                'assets/AppMovie/icon_uptop.svg',
-                height: 30,
-              ),
+      backgroundColor: const Color(0xff2c3251),
+      // Nền tối
+      body: Column(
+        children: [
+          Container(
+            color: const Color(0xff2a304d),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, color: Colors.white),
+                  onPressed: () {
+                    setState(() {
+                      final currentPage = tableCalendarController.page!;
+                      tableCalendarController.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.bounceInOut,
+                      );
+                      date = getDateFromIndex((currentPage - 1) as int);
+                      widget.onDateChanged(date);
+                    });
+                  },
+                ),
+                Text(
+                  "${listMonth[date.month].toString().toUpperCase()} ${date.year}",
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right, color: Colors.white),
+                  onPressed: () {
+                    setState(() {
+                      final currentPage = tableCalendarController.page?.round() ?? 0;
+                      tableCalendarController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                      date = getDateFromIndex((currentPage + 1));
+                      widget.onDateChanged(date);
+                    });
+                  },
+                ),
+              ],
             ),
           ),
+          SizedBox(
+            height: size.height / 2.3,
+            width: size.width,
+            child: Column(
+              children: [
+                GridView.count(
+                  crossAxisCount: 7,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: weekDays.map((day) {
+                    return Container(
+                      color: const Color(0xff2a304d),
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(day,
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    );
+                  }).toList(),
+                ),
+                //table ngày trong tháng
+                SizedBox(
+                  height: MediaQuery.of(context).size.height / 3,
+                  child: PageView.builder(
+                    physics: const ClampingScrollPhysics(),
+                    controller: tableCalendarController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        date = getDateFromIndex(index);
+                        widget.onDateChanged(date); // Cập nhật trạng thái
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      //final currentMonth = getDateFromIndex(index);
+                      List<DateTime?> days = generateCalendarDays(date.year, date.month);
+                      return SizedBox(
+                          child: GridView.builder(
+                        shrinkWrap: true,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 7,
+                            crossAxisSpacing: 1,
+                            mainAxisSpacing: 1,
+                            childAspectRatio: 1.25),
+                        itemCount: days.length,
+                        itemBuilder: (context, index) {
+                          final day = days[index];
+                          bool isToday = day != null && isSameDay(day, DateTime.now());
+                          int colorState = widget.selectedDays[day] ?? 0;
+                          Color bgColor;
+                          if (colorState == 1) {
+                            bgColor = const Color(0xff587d97);
+                          } else if (colorState == 2) {
+                            bgColor = const Color(0xff3d516d);
+                          } else if (colorState == 3) {
+                            bgColor = const Color(0xff364160);
+                          } else {
+                            bgColor = Colors.transparent;
+                          }
+                          return GestureDetector(
+                            onTap: () {
+                              if (day != null) {
+                                widget.onDayClicked(day);
+                              }
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: isToday ? Colors.white : bgColor,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                day != null ? '${day.day}' : '',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isToday
+                                      ? Colors.black
+                                      : colorState > 0
+                                          ? Colors.white
+                                          : const Color(0xff666b88),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ));
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          //payment
+          Expanded(
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              children: const [
+                NewPayment(
+                  colorIcon: Color(0xff9B7EF8),
+                  title: "Electricity Bill",
+                  behavior: "every month",
+                  bill: "108",
+                  isIcon: false,
+                ),
+                NewPayment(
+                  isIcon: false,
+                  title: "DropBox Subscription",
+                  bill: " 9.99",
+                  behavior: "every month",
+                  colorIcon: Color(0xffE2E289),
+                ),
+                NewPayment(
+                  isIcon: true,
+                  bill: "0",
+                  behavior: "schedule new payment",
+                  colorIcon: Colors.grey,
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                        margin: const EdgeInsets.only(top: 5),
+                        width: 40,
+                        height: 40,
+                        child: SvgPicture.asset(
+                          'assets/CalendarApp/ovalicon.svg',
+                        )),
+                    const Text(
+                      "All Categories",
+                      style:
+                          TextStyle(fontSize: 18, color: Color(0xff7FCFDC), fontFamily: "Roboto"),
+                    ),
+                  ],
+                ),
+                const Text(
+                  r'$' "117.99",
+                  style: TextStyle(color: Color(0xff7FCFDC), fontSize: 20),
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class NewPayment extends StatelessWidget {
+  final String title;
+  final String behavior;
+  final Color colorIcon;
+  final String bill;
+  final bool isIcon;
+
+  const NewPayment(
+      {this.title = "",
+      required this.isIcon,
+      required this.bill,
+      required this.behavior,
+      required this.colorIcon,
+      super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                      margin: const EdgeInsets.only(top: 5),
+                      width: 15,
+                      height: 15,
+                      decoration: isIcon
+                          ? null
+                          : ShapeDecoration(
+                              color: colorIcon,
+                              shape: const CircleBorder(side: BorderSide(color: Colors.black)),
+                            ),
+                      child: Visibility(
+                          visible: isIcon,
+                          child: SvgPicture.asset(
+                            'assets/CalendarApp/iconpayment.svg',
+                            height: 17,
+                            width: 17,
+                          ))),
+                  const SizedBox(width: 20),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width / 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Visibility(
+                            visible: !isIcon,
+                            child: Text(
+                              title,
+                              style: const TextStyle(
+                                  fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                            )),
+                        Text(
+                          behavior,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xff6c718e),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                !isIcon ? r'$' "$bill" : " ",
+                style: const TextStyle(color: Color(0xff7FCFDC), fontSize: 20),
+              )
+            ],
+          ),
+        ),
+        const SizedBox(
+          height: 20,
+        ),
+        Visibility(
+          visible: !isIcon,
+          child: Container(
+            margin: const EdgeInsets.only(left: 50),
+            width: MediaQuery.of(context).size.width,
+            height: 1,
+            color: Colors.grey.withOpacity(0.2),
+          ),
+        ),
+        const SizedBox(
+          height: 20,
+        ),
       ],
     );
   }
 }
 
-class PageViewWithScrollPreservation extends StatelessWidget {
-  const PageViewWithScrollPreservation({super.key});
+class BalancePage extends StatelessWidget {
+  final DateTime selectedDate = DateTime.now();
+
+  BalancePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Scroll giữ nguyên bằng PageStorageKey')),
-      body: PageView(
-        children: const [
-          CustomListPage(tabIndex: 0),
-          CustomListPage(tabIndex: 1),
-          CustomListPage(tabIndex: 2),
-        ],
-      ),
-    );
-  }
-}
-
-class CustomListPage extends StatelessWidget {
-  final int tabIndex;
-
-  const CustomListPage({super.key, required this.tabIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      key: PageStorageKey('listview_tab_$tabIndex'), // Mỗi tab có key riêng
-      itemCount: 50,
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: CircleAvatar(child: Text('$tabIndex')),
-          title: Text('Tab $tabIndex - Item $index'),
-        );
-      },
-    );
-  }
-}
-
-class ScrollOffset {
-  double offset = 0.0;
-}
-
-class SortableCheckList extends StatefulWidget {
-  const SortableCheckList({super.key});
-
-  @override
-  State<SortableCheckList> createState() => _SortableCheckListState();
-}
-
-class _SortableCheckListState extends State<SortableCheckList> {
-  List<Item> items = [
-    Item(id: 1, name: 'Banana'),
-    Item(id: 2, name: 'Apple'),
-    Item(id: 3, name: 'Cherry'),
-    Item(id: 4, name: 'Date'),
-    Item(id: 5, name: 'Elderberry'),
-  ];
-
-  Set<int> checkedItemIds = {};
-  bool sortAZ = true;
-
-  void toggleCheck(Item item, bool? isChecked) {
-    setState(() {
-      if (isChecked == true) {
-        checkedItemIds.add(item.id);
-      } else {
-        checkedItemIds.remove(item.id);
-      }
-    });
-  }
-
-  void sortItems() {
-    setState(() {
-      if (sortAZ) {
-        items.sort((a, b) => a.name.compareTo(b.name));
-      } else {
-        items.sort((a, b) => b.name.compareTo(a.name));
-      }
-      sortAZ = !sortAZ;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sortable Checkbox List'),
-        actions: [
-          IconButton(
-            icon: Icon(sortAZ ? Icons.arrow_downward : Icons.arrow_upward),
-            onPressed: sortItems,
-            tooltip: sortAZ ? "Sort A-Z" : "Sort Z-A",
-          ),
-          IconButton(
-              onPressed: () {
-                (Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ComplexLayoutScrollDemo(),
-                    )));
-              },
-              icon: const Icon(Icons.arrow_right))
-        ],
-      ),
-      body: ListView(
-        children: items.map((item) {
-          return CheckboxListTile(
-            title: Text(item.name),
-            value: checkedItemIds.contains(item.id),
-            onChanged: (val) => toggleCheck(item, val),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-class ComplexLayoutScrollDemo extends StatefulWidget {
-  const ComplexLayoutScrollDemo({super.key});
-
-  @override
-  ComplexLayoutScrollDemoState createState() => ComplexLayoutScrollDemoState();
-}
-
-class ComplexLayoutScrollDemoState extends State<ComplexLayoutScrollDemo> {
-  final scrollState = ScrollOffset();
-  late ScrollController _scrollController;
-
-  final ItemPositionsListener _positionsListener = ItemPositionsListener.create();
-  final TextEditingController _gotoController = TextEditingController();
-
-  void _scrollToIndex(int index) {
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  Widget _buildItem(int index) {
-    // Giả lập item với chiều cao khác nhau
-    final height = 60.0 + (index % 5) * 30.0;
-    return Container(
-      height: height,
-      padding: const EdgeInsets.all(12),
-      color: index % 2 == 0 ? Colors.grey.shade300 : Colors.grey.shade100,
-      child: Text("Item $index - height: $height", style: const TextStyle(fontSize: 18)),
-    );
-  }
-
-  @override
-  void initState() {
-    _scrollController = ScrollController(initialScrollOffset: scrollState.offset);
-    print(scrollState.offset.toString());
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    print(_scrollController.offset.toString());
-
-    scrollState.offset = _scrollController.offset;
-
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Scroll To Item - Layout Phức Tạp")),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _gotoController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(hintText: "Nhập index"),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        //thông tin
+        Expanded(
+          child: Padding(
+              padding: const EdgeInsets.only(left: 30, top: 50, bottom: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Balance",
+                        style: TextStyle(fontSize: 45, color: Colors.white),
+                      ),
+                      //ngày tháng được chọn bên tab calendar
+                      Text(
+                        '${listMonth[selectedDate.month]}, ${selectedDate.day} ${selectedDate.year}',
+                        style: const TextStyle(color: Color(0xff757a95), fontSize: 16),
+                      )
+                    ],
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final index = int.tryParse(_gotoController.text);
-                    if (index != null) {
-                      _scrollToIndex(index);
-                    }
-                  },
-                  child: const Text("Go"),
-                )
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: 100,
-              itemBuilder: (_, index) => _buildItem(index),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ScrollbarWithController extends StatefulWidget {
-  const ScrollbarWithController({super.key});
-
-  @override
-  State<ScrollbarWithController> createState() => _ScrollbarWithControllerState();
-}
-
-class _ScrollbarWithControllerState extends State<ScrollbarWithController> {
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Kéo thanh cuộn nhanh")),
-      body: Scrollbar(
-        controller: _scrollController,
-        thickness: 12,
-        interactive: true,
-        radius: const Radius.circular(10),
-        thumbVisibility: true,
-        // Hiện thanh cuộn ngay từ đầu
-        child: ListView.builder(
-          controller: _scrollController,
-          itemCount: 100, // Giả lập danh sách dài
-          itemBuilder: (context, index) => ListTile(
-            title: Text("Item $index"),
+                  const Row(
+                    children: [
+                      //Curent
+                      Column(
+                        children: [
+                          Text(
+                            r'$3 580',
+                            style: TextStyle(color: Color(0xff7FCFDC), fontSize: 20),
+                          ),
+                          Text('CURRENT', style: TextStyle(color: Color(0xff7FCFDC)))
+                        ],
+                      ),
+                      SizedBox(
+                        width: 30,
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            r'$1 220',
+                            style: TextStyle(color: Colors.grey, fontSize: 20),
+                          ),
+                          Text('LAST MONTH', style: TextStyle(color: Colors.grey))
+                        ],
+                      )
+                      //last month
+                    ],
+                  )
+                ],
+              )),
+        ),
+        //biểu đồ xếp chồng
+        Container(
+          color: const Color(0xff282E4B),
+          padding: const EdgeInsets.only(top: 30),
+          height: MediaQuery.of(context).size.height / 2,
+          width: MediaQuery.of(context).size.width,
+          child: SvgPicture.asset(
+            'assets/CalendarApp/scratch.svg',
+            fit: BoxFit.fill,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class RefreshListView extends StatefulWidget {
-  const RefreshListView({super.key});
-
-  @override
-  RefreshListViewState createState() => RefreshListViewState();
-}
-
-class RefreshListViewState extends State<RefreshListView> {
-  List<String> items = List.generate(10, (index) => "Item ${index + 1}");
-
-  // Hàm làm mới danh sách
-  Future<void> _refreshData() async {
-    await Future.delayed(const Duration(seconds: 2)); // Giả lập tải dữ liệu từ API
-    setState(() {
-      items = List.generate(10, (index) => "Item mới ${index + 1}");
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Pull to Refresh ListView")),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: ListView.builder(
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              title: Text(items[index]),
-              leading: const Icon(Icons.refresh),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class PullToRefreshWithCheckbox extends StatefulWidget {
-  const PullToRefreshWithCheckbox({super.key});
-
-  @override
-  State<PullToRefreshWithCheckbox> createState() => _PullToRefreshWithCheckboxState();
-}
-
-class _PullToRefreshWithCheckboxState extends State<PullToRefreshWithCheckbox> {
-  final List<int> allItems = List.generate(20, (index) => index + 1); // 20 item có sẵn
-  List<int> displayedItems = []; // Danh sách 10 item ngẫu nhiên
-  final Map<int, bool> checkedItems = {}; // Trạng thái checkbox của từng item
-  final Random random = Random();
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRandomItems(); // Lần đầu load danh sách 10 item
-  }
-
-  // Chọn ngẫu nhiên 10 item từ danh sách gốc
-  void _loadRandomItems() {
-    setState(() {
-      displayedItems = List.from(allItems)..shuffle(random);
-      displayedItems = displayedItems.take(10).toList();
-    });
-  }
-
-  // Giữ trạng thái checkbox khi làm mới danh sách
-  Future<void> _refreshData() async {
-    await Future.delayed(const Duration(seconds: 2)); // Giả lập thời gian tải
-    _loadRandomItems(); // Cập nhật danh sách 10 item ngẫu nhiên
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Pull to Refresh with Checkbox")),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: ListView.builder(
-          itemCount: displayedItems.length,
-          itemBuilder: (context, index) {
-            int item = displayedItems[index];
-            return ListTile(
-              title: Text("Item $item"),
-              leading: Checkbox(
-                value: checkedItems[item] ?? false, // Giữ trạng thái checkbox
-                onChanged: (bool? value) {
-                  setState(() {
-                    checkedItems[item] = value ?? false; // Cập nhật trạng thái
-                  });
-                },
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-//lọc dữ liệu
-class Book {
-  final String title;
-  final String genre;
-
-  Book(this.title, this.genre);
-}
-
-class BookFilterScreen extends StatefulWidget {
-  const BookFilterScreen({super.key});
-
-  @override
-  State<BookFilterScreen> createState() => _BookFilterScreenState();
-}
-
-class _BookFilterScreenState extends State<BookFilterScreen> {
-  final List<Book> allBooks = [
-    Book("Cuộc Sống Kinh Dị", "Kinh Dị"),
-    Book("Chạng Vạng", "Lãng Mạn"),
-    Book("Ma Quái", "Kinh Dị"),
-    Book("Tình Yêu Vĩnh Cửu", "Lãng Mạn"),
-    Book("Bóng Tối", "Kinh Dị"),
-    Book("Hẹn Hò Nơi Paris", "Lãng Mạn"),
-  ];
-
-  String selectedGenre = "Tất Cả"; // Lưu bộ lọc hiện tại
-
-  @override
-  Widget build(BuildContext context) {
-    List<Book> filteredBooks = selectedGenre == "Tất Cả"
-        ? allBooks
-        : allBooks.where((book) => book.genre == selectedGenre).toList();
-
-    return Scaffold(
-      appBar: AppBar(title: const Text("Lọc Sách")),
-      body: Column(
-        children: [
-          // Bộ lọc thể loại
-          DropdownButton<String>(
-            value: selectedGenre,
-            onChanged: (String? newGenre) {
-              if (newGenre != null) {
-                setState(() {
-                  selectedGenre = newGenre;
-                });
-              }
-            },
-            items: ["Tất Cả", "Kinh Dị", "Lãng Mạn"]
-                .map((genre) => DropdownMenuItem(
-                      value: genre,
-                      child: Text(genre),
-                    ))
-                .toList(),
-          ),
-          Expanded(
-            child: filteredBooks.isEmpty
-                ? const Center(child: Text("Không có sách nào phù hợp"))
-                : ListView.builder(
-                    itemCount: filteredBooks.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text(filteredBooks[index].title),
-                        subtitle: Text(filteredBooks[index].genre),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-//chuyển dạng listview- gridview
-class ToggleViewExample extends StatefulWidget {
-  const ToggleViewExample({super.key});
-
-  @override
-  ToggleViewExampleState createState() => ToggleViewExampleState();
-}
-
-class ToggleViewExampleState extends State<ToggleViewExample> {
-  bool isGridView = false;
-  List<Item> items = List.generate(20, (index) => Item(id: index, name: "Item $index"));
-  Map<int, bool> selectedItems = {};
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Toggle List/Grid View"),
-        actions: [
-          IconButton(
-            icon: Icon(isGridView ? Icons.list : Icons.grid_view),
-            onPressed: () {
-              setState(() {
-                isGridView = !isGridView;
-              });
-            },
-          )
-        ],
-      ),
-      body: isGridView ? buildGridView() : buildListView(),
-    );
-  }
-
-  Widget buildListView() {
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        return buildItem(items[index]);
-      },
-    );
-  }
-
-  Widget buildGridView() {
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, // 2 cột
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 3,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        return buildItem(items[index]);
-      },
-    );
-  }
-
-  Widget buildItem(Item item) {
-    return Card(
-      child: ListTile(
-        leading: Checkbox(
-          value: selectedItems[item.id] ?? false,
-          onChanged: (bool? value) {
-            setState(() {
-              selectedItems[item.id] = value!;
-            });
-          },
-        ),
-        title: Text(item.name),
-      ),
-    );
-  }
-}
-
-class ListItem extends StatelessWidget {
-  const ListItem({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
-  }
-}
-
-class Item {
-  final int id;
-  final String name;
-
-  Item({required this.id, required this.name});
-}
-
-class MovieListScreen extends StatefulWidget {
-  const MovieListScreen({super.key});
-
-  @override
-  State<MovieListScreen> createState() => _MovieListScreenState();
-}
-
-class _MovieListScreenState extends State<MovieListScreen> {
-  final List<int> movies = List.generate(20, (index) => index + 1);
-  final Map<int, bool> likedMovies = {}; // Lưu trạng thái đã tym
-  final ScrollController _controller = ScrollController();
-  bool isLoading = false;
-  bool hasMoreData = true;
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    _controller.addListener(_scrollController);
-    super.initState();
-  }
-
-  void _scrollController() {
-    if (!isLoading) {
-      loadMoreData();
-    }
-  }
-
-  void toggleLike(int index) {
-    setState(() {
-      likedMovies[index] = !(likedMovies[index] ?? false);
-    });
-  }
-
-  Future<void> loadMoreData() async {
-    setState(() {
-      isLoading = true;
-    });
-    await Future.delayed(const Duration(seconds: 2));
-    List<int> newList = List.generate(10, (index) => movies.length + index + 1);
-    if (movies.length >= 50) {
-      setState(() {
-        hasMoreData = false;
-      });
-    } else {
-      movies.addAll(newList);
-    }
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Danh Sách Phim")),
-      body: ListView.builder(
-          controller: _controller,
-          itemCount: movies.length + (isLoading ? 1 : 0),
-          itemBuilder: (context, index) {
-            bool isLiked = likedMovies[index] ?? false;
-            if (index < movies.length) {
-              return ListTile(
-                title: Text("phim ${movies[index]}"),
-                trailing: GestureDetector(
-                  onTap: () => toggleLike(index),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (Widget child, Animation<double> animation) {
-                      return ScaleTransition(scale: animation, child: child);
-                    },
-                    child: Icon(
-                      isLiked ? Icons.favorite : Icons.favorite_border,
-                      key: ValueKey(isLiked),
-                      // Đảm bảo animation hoạt động đúng
-                      color: isLiked ? Colors.red : Colors.grey,
-                      size: 30,
-                    ),
-                  ),
-                ),
-              );
-            } else if (hasMoreData) {
-              return const Center(
-                  child: Padding(
-                padding: EdgeInsets.all(8),
-                child: CircularProgressIndicator(),
-              ));
-            }
-            return const Center();
-          }),
+        Container(
+          color: Colors.white,
+          height: 5,
+          width: MediaQuery.of(context).size.width / 2,
+        )
+      ],
     );
   }
 }
