@@ -19,7 +19,7 @@ class SoccerApp extends StatefulWidget {
   }
 }
 
-Map<String, List<String>> duLieu = {
+Map<String, List<String>> data = {
   "Create Profile": [
     'assets/SoccerAppPageView/svg1.png',
     'Create Profile',
@@ -46,7 +46,7 @@ Map<String, List<String>> duLieu = {
     'Get started to make a new play buddy!'
   ]
 };
-List<String> listKey = duLieu.keys.toList();
+List<String> listKey = data.keys.toList();
 
 class SoccerAppState extends State<SoccerApp> {
   int selected = 0;
@@ -54,10 +54,21 @@ class SoccerAppState extends State<SoccerApp> {
   final PageController _pageController = PageController(initialPage: 0);
 
   bool checkSVG(String svgPath) {
-    if (svgPath.contains('.svg')) {
-      return true;
-    }
-    return false;
+    return svgPath.contains('.svg');
+  }
+
+  void onPageChange(int index) {
+    setState(() => selected = index);
+    // if (index == data.length + 1) {
+    //   Future.delayed(const Duration(milliseconds: 300), () {
+    //     _pageController.jumpToPage(1);
+    //   });
+    // }
+    // if (index == 0) {
+    //   Future.delayed(const Duration(milliseconds: 300), () {
+    //     _pageController.jumpToPage(duLieu.length);
+    //   });
+    // }
   }
 
   void handleCategoryButtonPress(int index) {
@@ -79,20 +90,20 @@ class SoccerAppState extends State<SoccerApp> {
             scrollDirection: Axis.horizontal,
             controller: _pageController,
             onPageChanged: (index) {
-              setState(() {
-                selected = index;
-              });
+              onPageChange(index);
             },
-            itemCount: countIndex.length,
+            itemCount: data.length,
             itemBuilder: (context, index) {
-              List<String>? data = duLieu[listKey[index]];
-              checkSvg = checkSVG(data![0]);
-              return _PageView(
-                  svgPath: data[0],
-                  title:
-                      duLieu.containsKey(listKey[index]) ? listKey[index] : '',
-                  view: data[2],
-                  svgCheck: checkSvg);
+              List<String>? listPath = data[listKey[index]];
+              checkSvg = checkSVG(listPath![0]);
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0),
+                child: _PageView(
+                    svgPath: listPath[0],
+                    title: data.containsKey(listKey[index]) ? listKey[index] : '',
+                    view: listPath[2],
+                    svgCheck: checkSvg),
+              );
             },
           )),
           SizedBox(
@@ -156,7 +167,7 @@ class SoccerAppState extends State<SoccerApp> {
   }
 }
 
-final List<int> countIndex = [0, 1, 2, 3, 4, 5];
+final List<int> countIndex = [1, 2, 3, 4, 5];
 
 class _NextPageView extends StatelessWidget {
   final bool isSelected;
@@ -169,8 +180,7 @@ class _NextPageView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 1),
         child: isSelected
             ? const Icon(size: 13, Icons.circle, color: Color(0xFF0448D8))
-            : const Icon(
-                size: 13, color: Color(0xff778595), Icons.circle_outlined));
+            : const Icon(size: 13, color: Color(0xff778595), Icons.circle_outlined));
   }
 }
 
@@ -181,10 +191,7 @@ class _PageView extends StatelessWidget {
   final bool svgCheck;
 
   const _PageView(
-      {required this.svgPath,
-      required this.title,
-      required this.view,
-      required this.svgCheck});
+      {required this.svgPath, required this.title, required this.view, required this.svgCheck});
 
   @override
   Widget build(BuildContext context) {
@@ -217,10 +224,7 @@ class _PageView extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                        fontSize: 35,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        height: 1),
+                        fontSize: 35, color: Colors.white, fontWeight: FontWeight.bold, height: 1),
                     maxLines: 2,
                   ),
                 ],
