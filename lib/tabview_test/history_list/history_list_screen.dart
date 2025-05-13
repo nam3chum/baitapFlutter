@@ -1,29 +1,30 @@
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:navigation_test/tabview_test/history_list/read_history_model.dart';
 
 import '../Model/story.dart';
-import '../story_detail.dart';
-import 'bookshelf_model.dart';
 
-class BookshelfScreen extends StatelessWidget {
-  const BookshelfScreen({super.key});
+
+class HistoryScreen extends StatelessWidget {
+  const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final stories = BookshelfModel().stories;
+    final stories = ReadHistoryModel().stories;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Kệ sách'),),
+      appBar: AppBar(title: Text("Lịch sử đọc"),),
       body:
-          stories.isEmpty
-              ? Center(child: Text('Chưa có truyện nào trong kệ'))
-              : ListView.builder(
-                itemCount: stories.length,
-                itemBuilder: (context, index) {
-                  final story = stories[index];
-                  return _buildStoryItem(story, context);
-                },
-              ),
+      stories.isEmpty
+          ? Center(child: Text('Chưa có truyện nào trong kệ'))
+          : ListView.builder(
+        itemCount: stories.length,
+        itemBuilder: (context, index) {
+          final story = stories[index];
+          return _buildStoryItem(story, context);
+        },
+      ),
     );
   }
 }

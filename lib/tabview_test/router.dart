@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
-import 'package:navigation_test/TabViewTest/story_detail.dart';
+
+import 'package:navigation_test/tabview_test/second_tab/second_tab_screen.dart';
+import 'package:navigation_test/tabview_test/story_detail.dart';
 
 import 'Model/genre.dart';
 import 'Model/story.dart';
-import 'SecondTab/second_tab_screen.dart';
+
 import 'StoryList/genre_list_screen.dart';
 import 'StoryList/story_list_screen.dart';
 import 'home_screen.dart';
@@ -14,7 +16,7 @@ final router = GoRouter(
   routes: [
     ShellRoute(
       builder: (context, state, child) {
-        return MainScreen(child: child);
+        return MainScreen();
       },
       routes: [
         GoRoute(path: '/home', builder: (context, state) => FirstTabScreen()),

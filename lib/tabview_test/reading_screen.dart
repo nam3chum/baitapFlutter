@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:navigation_test/tabview_test/reading_state/reading_stats_model.dart';
 
 import 'Model/story.dart';
-import 'ReadingState/reading_stats_model.dart';
 
 class ReadingPage extends StatefulWidget {
   final Story story;

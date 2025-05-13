@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
 import '../Model/story.dart';
 import '../genre_repository.dart';
 
@@ -118,7 +116,7 @@ class StoryListScreenState extends State<StoryListScreen> {
   void initState() {
     super.initState();
     controller.addListener(onListener);
-    controller.keepScrollOffset == true;
+
   }
 
   void _scrollToTop() {
@@ -182,7 +180,7 @@ Widget _buildStoryItem(Story story, BuildContext context) {
     margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     child: InkWell(
       onTap: () {
-        context.push('/story', extra: story);
+        Navigator.pushNamed(context, '/detail',arguments: story);
       },
       child: Row(
         children: [

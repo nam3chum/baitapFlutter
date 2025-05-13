@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:navigation_test/Navigator/test.dart';
 
-import '../Bookshelf/bookshelf_model.dart';
-import '../Bookshelf/bookshelf_screen.dart';
-import '../HistoryList/history_list_screen.dart';
-import '../ReadingState/reading_state_screen.dart';
+import '../bookself/bookshelf_model.dart';
+import '../bookself/bookshelf_screen.dart';
+import '../history_list/history_list_screen.dart';
+import '../reading_state/reading_state_screen.dart';
 
 class PersonalPage extends StatefulWidget {
   const PersonalPage({super.key});
@@ -19,46 +18,54 @@ class PersonalPageState extends State<PersonalPage> {
   var _selectedIndex = 0;
   bool isShowAppBar = true;
   final ScrollController scrollController = ScrollController();
+
   void _onItemTap(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    Navigator.pop(context, "dữ liệu được truyền về");
-    Navigator.popUntil(context, ModalRoute.withName('/page1'));
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => HomePage()),
-          (route) => false,
-    );
+    Navigator.pop(context);
+    //Navigator.popAndPushNamed(context, "/listStory");
   }
-
 
   void _pickRandomStory() {
     final stories = BookshelfModel().stories;
+
+    if (stories.isEmpty) {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Text("Không có sách trong kệ sách"),
+              content: Text("Hãy thêm sách vào kệ để random sách trong kệ"),
+              actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("OK"))],
+            ),
+      );
+      return;
+    }
+
     final randomStory = (stories..shuffle()).first;
+
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Random truyện trong kệ sách"),
-          content: RichText(
-            text: TextSpan(
-              text: "Bạn nên đọc thử:\n",
-              style: TextStyle(color: Colors.black),
-              children: <TextSpan>[
-                TextSpan(
-                  text: randomStory.title,
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                ),
-                TextSpan(text: "\nTác giả: "),
-                TextSpan(text: randomStory.author, style: TextStyle(fontWeight: FontWeight.bold)),
-              ],
+      builder:
+          (context) => AlertDialog(
+            title: Text("Random truyện trong kệ sách"),
+            content: RichText(
+              text: TextSpan(
+                text: "Bạn nên đọc thử:\n",
+                style: TextStyle(color: Colors.black),
+                children: <TextSpan>[
+                  TextSpan(
+                    text: randomStory.title,
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
+                  TextSpan(text: "\nTác giả: "),
+                  TextSpan(text: randomStory.author, style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
             ),
+            actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("OK"))],
           ),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("OK"))],
-        );
-      },
     );
   }
 

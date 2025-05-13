@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:navigation_test/TabViewTest/reading_screen.dart';
+import 'package:navigation_test/tabview_test/reading_screen.dart';
 
-import 'Bookshelf/bookshelf_model.dart';
-import 'HistoryList/read_history_model.dart';
 import 'Model/story.dart';
 import 'StoryList/genre_list_screen.dart';
+import 'bookself/bookshelf_model.dart';
+import 'history_list/read_history_model.dart';
 
 class StoryDetailPage extends StatefulWidget {
   final Story story;
@@ -31,7 +30,7 @@ class StoryDetailPageState extends State<StoryDetailPage> {
 
   void readStory() {
     ReadHistoryModel().add(widget.story);
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ReadingPage(story: widget.story)));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ReadingPage(story: widget.story)));
   }
 
   @override
@@ -68,7 +67,7 @@ class StoryDetailPageState extends State<StoryDetailPage> {
                       backgroundColor: Colors.transparent,
                       leading: IconButton(
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => context.pop(),
+                        onPressed: () => Navigator.of(context).popUntil((route)=>route.isFirst)
                       ),
                       actions: [
                         IconButton(
