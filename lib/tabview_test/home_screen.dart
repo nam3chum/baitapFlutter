@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:navigation_test/tabview_test/reading_screen.dart';
 
 import 'package:navigation_test/tabview_test/second_tab/second_tab_screen.dart';
 import 'package:navigation_test/tabview_test/story_detail.dart';
@@ -28,6 +29,9 @@ MaterialPageRoute? routes(RouteSettings settings) {
     case '/genres':
       final arg = settings.arguments as Genre;
       return MaterialPageRoute(builder: (_) => GenreStoryListScreen(genre: arg));
+    case '/read':
+      final story = settings.arguments as Story;
+      return MaterialPageRoute(builder: (_)=> ReadingPage(story: story));
     default:
       return MaterialPageRoute(
         builder: (_) => Scaffold(body: Center(child: Text("4040 not foud!!!!"))),

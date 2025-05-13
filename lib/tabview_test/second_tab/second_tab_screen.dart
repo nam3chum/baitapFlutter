@@ -24,7 +24,7 @@ class PersonalPageState extends State<PersonalPage> {
       _selectedIndex = index;
     });
     Navigator.pop(context);
-    //Navigator.popAndPushNamed(context, "/listStory");
+    //navigator.popAndPushNamed(context, "/listStory");
   }
 
   void _pickRandomStory() {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../Model/story.dart';
 import '../genre_repository.dart';
+import '../push_smart.dart';
 
 final List<Story> stories = [
   Story(
@@ -180,7 +181,7 @@ Widget _buildStoryItem(Story story, BuildContext context) {
     margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     child: InkWell(
       onTap: () {
-        Navigator.pushNamed(context, '/detail',arguments: story);
+        pushSmart(context, '/detail',story);
       },
       child: Row(
         children: [

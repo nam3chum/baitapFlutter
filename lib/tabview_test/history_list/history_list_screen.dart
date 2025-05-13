@@ -1,10 +1,7 @@
-
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:navigation_test/tabview_test/history_list/read_history_model.dart';
 
 import '../Model/story.dart';
-
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
@@ -14,17 +11,17 @@ class HistoryScreen extends StatelessWidget {
     final stories = ReadHistoryModel().stories;
 
     return Scaffold(
-      appBar: AppBar(title: Text("Lịch sử đọc"),),
+      appBar: AppBar(title: Text("Lịch sử đọc")),
       body:
-      stories.isEmpty
-          ? Center(child: Text('Chưa có truyện nào trong kệ'))
-          : ListView.builder(
-        itemCount: stories.length,
-        itemBuilder: (context, index) {
-          final story = stories[index];
-          return _buildStoryItem(story, context);
-        },
-      ),
+          stories.isEmpty
+              ? Center(child: Text('Chưa có truyện nào trong kệ'))
+              : ListView.builder(
+                itemCount: stories.length,
+                itemBuilder: (context, index) {
+                  final story = stories[index];
+                  return _buildStoryItem(story, context);
+                },
+              ),
     );
   }
 }
@@ -36,7 +33,7 @@ Widget _buildStoryItem(Story story, BuildContext context) {
     margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     child: InkWell(
       onTap: () {
-        context.push('/story',extra: story);
+        Navigator.pushNamed(context, '/detail', arguments: story);
       },
       child: Row(
         children: [

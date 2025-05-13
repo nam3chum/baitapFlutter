@@ -83,6 +83,7 @@ class MyRouterDelegate extends RouterDelegate<AppState>
       },
     );
   }
+
   @override
   Future<void> setNewRoutePath(AppState configuration) async {
     onNewRoutePath(configuration);

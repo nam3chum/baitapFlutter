@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:navigation_test/Navigator2/route_delegate.dart';
-import 'package:navigation_test/Navigator2/route_information_parser.dart';
+import 'package:navigation_test/navigator_2/route_delegate.dart';
+import 'package:navigation_test/navigator_2/route_information_parser.dart';
 
 import 'appstate.dart';
 
@@ -19,7 +19,6 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> {
   // Khởi tạo trạng thái là trang Home
   AppState appState = AppState(page: PageType.home);
-
   // Cập nhật trạng thái và buộc cập nhật UI
   void _setNewRoutePath(AppState state) {
     setState(() {
@@ -30,7 +29,7 @@ class MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Navigator 2.0 Demo',
+      title: 'navigator 2.0 Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),

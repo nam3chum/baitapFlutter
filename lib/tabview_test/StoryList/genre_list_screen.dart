@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:navigation_test/tabview_test/push_smart.dart';
 
 import '../Model/genre.dart';
 import '../Model/story.dart';
@@ -36,7 +37,7 @@ Widget _buildStoryItem(Story story, BuildContext context) {
     margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     child: InkWell(
       onTap: () {
-        Navigator.pushNamed(context, '/detail',arguments: story);
+        pushSmart(context, '/detail', story);
       },
       child: Row(
         children: [
