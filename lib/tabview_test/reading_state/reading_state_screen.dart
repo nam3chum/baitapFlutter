@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:navigation_test/TabViewTest/ReadingState/reading_stats_model.dart';
+import 'package:navigation_test/tabview_test/reading_state/reading_stats_model.dart';
 
 import '../Model/readingstate.dart';
 
