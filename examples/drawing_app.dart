@@ -20,8 +20,7 @@ class DrawingPage extends StatefulWidget {
 
 class DrawingPageState extends State<DrawingPage> {
   List<Offset> strokes = [];
-  Offset currentStroke = Offset(0, 0);
-  bool isStopDrawing = false;
+  bool shouldDrawContinue = true;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +32,7 @@ class DrawingPageState extends State<DrawingPage> {
             tooltip: 'Undo',
             onPressed: () {
               setState(() {
-                if (strokes.isNotEmpty && isStopDrawing == false) {
+                if (strokes.isNotEmpty && shouldDrawContinue) {
                   strokes.removeLast();
                 }
               });
@@ -45,28 +44,33 @@ class DrawingPageState extends State<DrawingPage> {
             onPressed: () {
               setState(() {
                 strokes.clear();
-                isStopDrawing = false;
+                shouldDrawContinue = true;
               });
             },
           ),
           TextButton(
             onPressed: () {
-                isStopDrawing = true;
+              setState(() {
+                shouldDrawContinue = false;
+              });
             },
             child: Text("finish"),
           ),
         ],
       ),
       body: GestureDetector(
-        onPanStart: (details) {
+        onPanUpdate: (details) {
           setState(() {
-            if (!isStopDrawing) {
+            if (shouldDrawContinue) {
               strokes.add(details.localPosition);
             }
           });
         },
 
-        child: CustomPaint(size: Size.infinite, painter: DrawingPainter(strokes: strokes)),
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: DrawingPainter(strokes: strokes, shouldDrawContinue: shouldDrawContinue),
+        ),
       ),
     );
   }
@@ -74,8 +78,9 @@ class DrawingPageState extends State<DrawingPage> {
 
 class DrawingPainter extends CustomPainter {
   final List<Offset> strokes;
+  final bool shouldDrawContinue;
 
-  DrawingPainter({required this.strokes});
+  DrawingPainter({required this.strokes, required this.shouldDrawContinue});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -87,6 +92,9 @@ class DrawingPainter extends CustomPainter {
 
     for (int i = 0; i < strokes.length - 1; i++) {
       canvas.drawLine(strokes[i], strokes[i + 1], paint);
+    }
+    if (!shouldDrawContinue) {
+      canvas.drawLine(strokes[strokes.length - 1], strokes[0], paint);
     }
   }
 
