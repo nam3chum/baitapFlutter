@@ -17,12 +17,11 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
         (index) => _CardData(
       id: index,
       label: 'Thẻ ${index + 1}',
-      position: Offset(100, 50.0 + index * 100), // Sắp xếp dọc
+      position: Offset(100, 50.0 + index * 100),
     ),
   );
 
   int? draggingId;
-  int? hoverTargetId;
   Offset dragOffset = Offset.zero;
 
   @override
@@ -30,19 +29,9 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
     return Scaffold(
       body: Stack(
         children: cards.map((card) {
-          final isDragging = draggingId == card.id;
+          final isDragging = card.id == draggingId;
 
-          Offset displayPos = card.position;
-
-          if (draggingId != null && hoverTargetId != null) {
-            if (card.id == hoverTargetId) {
-              displayPos = cards.firstWhere((c) => c.id == draggingId).position;
-            } else if (card.id == draggingId) {
-              displayPos = dragOffset;
-            }
-          } else if (isDragging) {
-            displayPos = dragOffset;
-          }
+          Offset displayPos = isDragging ? dragOffset : card.position;
 
           return Positioned(
             left: displayPos.dx,
@@ -52,59 +41,26 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
                 setState(() {
                   draggingId = card.id;
                   dragOffset = card.position;
-                  hoverTargetId = null;
+
+                  final draggingCard = cards.firstWhere((c) => c.id == draggingId);
+                  cards.remove(draggingCard);
+                  cards.add(draggingCard);
                 });
               },
               onPanUpdate: (details) {
                 setState(() {
                   dragOffset += details.delta;
-
-                  final draggedRect = Rect.fromLTWH(dragOffset.dx, dragOffset.dy, 120, 80);
-
-                  _CardData? closestCard;
-                  double minDistance = double.infinity;
-
-                  for (var other in cards) {
-                    if (other.id == card.id) continue;
-
-                    final otherRect = Rect.fromLTWH(
-                      other.position.dx, other.position.dy, 120, 80,
-                    );
-
-                    if (draggedRect.overlaps(otherRect)) {
-                      final dist = (dragOffset + const Offset(60, 40) -
-                          (other.position + const Offset(60, 40)))
-                          .distance;
-                      if (dist < minDistance) {
-                        minDistance = dist;
-                        closestCard = other;
-                      }
-                    }
-                  }
-
-                  hoverTargetId = closestCard?.id;
                 });
               },
               onPanEnd: (_) {
                 setState(() {
                   final draggedCard = cards.firstWhere((c) => c.id == draggingId);
-
-                  if (draggingId != null && hoverTargetId != null) {
-                    final targetCard = cards.firstWhere((c) => c.id == hoverTargetId);
-
-                    final temp = targetCard.position;
-                    targetCard.position = draggedCard.position;
-                    draggedCard.position = temp;
-                  } else {
-                    draggedCard.position = dragOffset;
-                  }
-
+                  draggedCard.position = dragOffset;
                   draggingId = null;
-                  hoverTargetId = null;
                 });
               },
               child: Opacity(
-                opacity: isDragging ? 0.85 : 1.0,
+                opacity: isDragging ? 0.9 : 1.0,
                 child: _buildCard(card.label),
               ),
             ),
@@ -119,15 +75,12 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
       width: 120,
       height: 80,
       decoration: BoxDecoration(
-        color: Colors.teal[700],
+        color: Colors.blue[700],
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
       ),
       alignment: Alignment.center,
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white, fontSize: 20),
-      ),
+      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 20)),
     );
   }
 }
