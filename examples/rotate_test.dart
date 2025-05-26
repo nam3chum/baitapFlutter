@@ -13,8 +13,10 @@ class Rotate extends StatefulWidget {
 }
 
 class RotateState extends State<Rotate> {
-  double rotation = 0.0;
-  double startRotation = 0.0;
+  double _rotation = 0.0;
+  double _scale = 1.0;
+  double _startRotation = 0.0;
+  double _startScale = 1.0;
 
   @override
   Widget build(BuildContext context) {
@@ -22,21 +24,32 @@ class RotateState extends State<Rotate> {
       body: Center(
         child: GestureDetector(
           onScaleStart: (details) {
-            startRotation = rotation;
+            _startRotation = _rotation;
+            _startScale = _scale;
           },
           onScaleUpdate: (details) {
             setState(() {
-              rotation = startRotation + details.rotation;
+              _rotation = _startRotation + details.rotation;
+              _scale = _startScale * details.scale;
             });
           },
-          child: Transform.rotate(
-            angle: rotation,
-            child: Container(
-              width: 200,
-              height: 200,
-              color: Colors.orange,
-              alignment: Alignment.bottomCenter,
-            ),
+          child: Stack(
+            children: [
+              Center(
+                child: Transform(
+                  alignment: Alignment.center,
+                  transform:
+                  Matrix4.identity()
+                    ..scale(_scale)
+                    ..rotateZ(_rotation),
+                  child: Container(
+                    padding: EdgeInsets.all(32),
+                    decoration: BoxDecoration(color: Colors.yellow),
+                    child: Text("data"),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
