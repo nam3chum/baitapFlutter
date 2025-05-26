@@ -59,7 +59,7 @@ class DrawingPageState extends State<DrawingPage> {
         ],
       ),
       body: GestureDetector(
-        onPanUpdate: (details) {
+        onPanStart: (details) {
           setState(() {
             if (shouldDrawContinue) {
               strokes.add(details.localPosition);
