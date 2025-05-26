@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 void main() {
   runApp(MaterialApp(home: Rotate()));
 }
@@ -33,23 +32,19 @@ class RotateState extends State<Rotate> {
               _scale = _startScale * details.scale;
             });
           },
-          child: Stack(
-            children: [
-              Center(
-                child: Transform(
-                  alignment: Alignment.center,
-                  transform:
+          child: Center(
+            child: Transform(
+              alignment: Alignment.center,
+              transform:
                   Matrix4.identity()
                     ..scale(_scale)
                     ..rotateZ(_rotation),
-                  child: Container(
-                    padding: EdgeInsets.all(32),
-                    decoration: BoxDecoration(color: Colors.yellow),
-                    child: Text("data"),
-                  ),
-                ),
+              child: Container(
+                padding: EdgeInsets.all(32),
+                decoration: BoxDecoration(color: Colors.yellow),
+                child: Text("data"),
               ),
-            ],
+            ),
           ),
         ),
       ),
