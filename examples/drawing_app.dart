@@ -19,8 +19,9 @@ class DrawingPage extends StatefulWidget {
 }
 
 class DrawingPageState extends State<DrawingPage> {
-  List<List<Offset>> strokes = [];
-  List<Offset> currentStroke = [];
+  List<Offset> strokes = [];
+  Offset currentStroke = Offset(0, 0);
+  bool isStopDrawing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +33,7 @@ class DrawingPageState extends State<DrawingPage> {
             tooltip: 'Undo',
             onPressed: () {
               setState(() {
-                if (strokes.isNotEmpty) {
+                if (strokes.isNotEmpty && isStopDrawing == false) {
                   strokes.removeLast();
                 }
               });
@@ -44,44 +45,37 @@ class DrawingPageState extends State<DrawingPage> {
             onPressed: () {
               setState(() {
                 strokes.clear();
+                isStopDrawing = false;
               });
             },
+          ),
+          TextButton(
+            onPressed: () {
+                isStopDrawing = true;
+            },
+            child: Text("finish"),
           ),
         ],
       ),
       body: GestureDetector(
         onPanStart: (details) {
           setState(() {
-            currentStroke = details.localPosition as List<Offset>;
-          });
-        },
-        onPanUpdate: (details) {
-          setState(() {
-            currentStroke.add(details.localPosition);
-          });
-        },
-        onPanEnd: (details) {
-          setState(() {
-            if (currentStroke.length > 1) {
-              strokes.add(List.from(currentStroke));
+            if (!isStopDrawing) {
+              strokes.add(details.localPosition);
             }
-            currentStroke = [];
           });
         },
-        child: CustomPaint(
-          size: Size.infinite,
-          painter: DrawingPainter(strokes: strokes, currentStroke: currentStroke),
-        ),
+
+        child: CustomPaint(size: Size.infinite, painter: DrawingPainter(strokes: strokes)),
       ),
     );
   }
 }
 
 class DrawingPainter extends CustomPainter {
-  final List<List<Offset>> strokes;
-  final List<Offset> currentStroke;
+  final List<Offset> strokes;
 
-  DrawingPainter({required this.strokes, required this.currentStroke});
+  DrawingPainter({required this.strokes});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -91,15 +85,8 @@ class DrawingPainter extends CustomPainter {
           ..strokeCap = StrokeCap.round
           ..strokeWidth = 4.0;
 
-    for (var stroke in strokes) {
-      for (int i = 0; i < stroke.length - 1; i++) {
-        canvas.drawLine(stroke[i], stroke[i + 1], paint);
-      }
-    }
-
-    // Vẽ nét đang vẽ (chưa được add vào strokes)
-    for (int i = 0; i < currentStroke.length - 1; i++) {
-      canvas.drawLine(currentStroke[i], currentStroke[i + 1], paint);
+    for (int i = 0; i < strokes.length - 1; i++) {
+      canvas.drawLine(strokes[i], strokes[i + 1], paint);
     }
   }
 
