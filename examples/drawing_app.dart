@@ -64,7 +64,7 @@ class DrawingPageState extends State<DrawingPage> {
 
           setState(() {
             selectedStrokeIndex = null;
-            for (int i = 0; i < strokes.length; i++) {
+            for (int i = strokes.length - 1; i >= 0; i--) {
               for (final point in strokes[i]) {
                 if ((point - tappedPoint).distance <= tolerance) {
                   selectedStrokeIndex = i;
@@ -72,6 +72,7 @@ class DrawingPageState extends State<DrawingPage> {
                 }
               }
             }
+
           });
         },
 
