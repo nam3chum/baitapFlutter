@@ -45,73 +45,67 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
     }
   }
 
-  int _getColumnFromX(double x) {
-    if (x < 140) return 0;
-    if (x < 280) return 1;
+  int _getColumnFromX(double xCenter) {
+    if (xCenter < columnWidth) return 0;
+    if (xCenter < 2 * columnWidth) return 1;
     return 2;
   }
 
-  double _getColumnX(int column) => 20 + column * columnWidth;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            children: [
-              // 3 vùng màu
-              Positioned.fill(
-                child: Row(
-                  children: [
-                    Expanded(child: Container(color: Colors.red.withOpacity(0.2))),
-                    Expanded(child: Container(color: Colors.green.withOpacity(0.2))),
-                    Expanded(child: Container(color: Colors.blue.withOpacity(0.2))),
-                  ],
-                ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Row(
+              children: [
+                Expanded(child: Container(color: Colors.red.withValues(alpha: 0.2))),
+                Expanded(child: Container(color: Colors.green.withValues(alpha: 0.2))),
+                Expanded(child: Container(color: Colors.blue.withValues(alpha: 0.2))),
+              ],
+            ),
+          ),
+
+          ...[...columnCards.values.expand((e) => e)].map((card) {
+            final isDragging = card.id == draggingId;
+            final displayPos = isDragging ? dragOffset : card.position;
+
+            return Positioned(
+              left: displayPos.dx,
+              top: displayPos.dy,
+              child: GestureDetector(
+                onPanStart: (_) {
+                  setState(() {
+                    draggingId = card.id;
+                    dragOffset = card.position;
+                  });
+                },
+                onPanUpdate: (details) {
+                  setState(() {
+                    dragOffset += details.delta;
+                  });
+                },
+                onPanEnd: (_) {
+                  setState(() {
+                    final draggedCard = cards.firstWhere((c) => c.id == draggingId);
+                    final xCenter = dragOffset.dx + cardWidth / 2;
+                    final targetCol = _getColumnFromX(xCenter);
+
+                    for (var list in columnCards.values) {
+                      list.remove(draggedCard);
+                    }
+                    columnCards[targetCol]!.add(draggedCard);
+                    _recalculatePositions();
+
+                    draggingId = null;
+                  });
+                },
+                child: Opacity(opacity: isDragging ? 0.9 : 1.0, child: _buildCard(card.label)),
               ),
-
-              // Các thẻ
-              ...[...columnCards.values.expand((e) => e)].map((card) {
-                final isDragging = card.id == draggingId;
-                final displayPos = isDragging ? dragOffset : card.position;
-
-                return Positioned(
-                  left: displayPos.dx,
-                  top: displayPos.dy,
-                  child: GestureDetector(
-                    onPanStart: (_) {
-                      setState(() {
-                        draggingId = card.id;
-                        dragOffset = card.position;
-                      });
-                    },
-                    onPanUpdate: (details) {
-                      setState(() {
-                        dragOffset += details.delta;
-                      });
-                    },
-                    onPanEnd: (_) {
-                      setState(() {
-                        final draggedCard = cards.firstWhere((c) => c.id == draggingId);
-                        final targetCol = _getColumnFromX(dragOffset.dx);
-
-                        for (var list in columnCards.values) {
-                          list.remove(draggedCard);
-                        }
-                        columnCards[targetCol]!.add(draggedCard);
-                        _recalculatePositions();
-
-                        draggingId = null;
-                      });
-                    },
-                    child: Opacity(opacity: isDragging ? 0.9 : 1.0, child: _buildCard(card.label)),
-                  ),
-                );
-              }),
-            ],
-          );
-        },
+            );
+          }),
+        ],
       ),
     );
   }
