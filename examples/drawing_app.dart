@@ -1,13 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
-void main() => runApp(DrawingApp());
+void main() => runApp(const DrawingApp());
 
 class DrawingApp extends StatelessWidget {
   const DrawingApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: DrawingPage());
+    return const MaterialApp(home: DrawingPage());
   }
 }
 
@@ -19,82 +20,137 @@ class DrawingPage extends StatefulWidget {
 }
 
 class DrawingPageState extends State<DrawingPage> {
-  List<Offset> strokes = [];
-  bool shouldDrawContinue = true;
+  List<List<Offset>> strokes = [];
+  List<Offset> currentStroke = [];
+  Timer? undoTimer;
+  int? selectedStrokeIndex;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          IconButton(
-            icon: Icon(Icons.undo),
-            tooltip: 'Undo',
-            onPressed: () {
-              setState(() {
-                if (strokes.isNotEmpty && shouldDrawContinue) {
-                  strokes.removeLast();
-                }
+          GestureDetector(
+            onLongPressStart: (_) {
+              undoTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+                _handleUndo();
               });
             },
+            onLongPressEnd: (_) {
+              undoTimer?.cancel();
+            },
+            onTap: _handleUndo,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Icon(Icons.undo, size: 28),
+            ),
           ),
           IconButton(
-            icon: Icon(Icons.delete),
+            icon: const Icon(Icons.delete),
             tooltip: 'Clear All',
             onPressed: () {
               setState(() {
                 strokes.clear();
-                shouldDrawContinue = true;
+                selectedStrokeIndex = null;
               });
             },
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                shouldDrawContinue = false;
-              });
-            },
-            child: Text("finish"),
           ),
         ],
       ),
       body: GestureDetector(
-        onPanStart: (details) {
+        onTapDown: (details) {
+          final tappedPoint = details.localPosition;
+          const double tolerance = 10.0;
+
           setState(() {
-            if (shouldDrawContinue) {
-              strokes.add(details.localPosition);
+            selectedStrokeIndex = null;
+            for (int i = 0; i < strokes.length; i++) {
+              for (final point in strokes[i]) {
+                if ((point - tappedPoint).distance <= tolerance) {
+                  selectedStrokeIndex = i;
+                  return;
+                }
+              }
             }
           });
         },
 
+        onPanStart: (details) {
+          setState(() {
+            selectedStrokeIndex = null;
+            currentStroke = [details.localPosition, details.localPosition];
+          });
+        },
+        onPanUpdate: (details) {
+          setState(() {
+            currentStroke.add(details.localPosition);
+          });
+        },
+        onPanEnd: (details) {
+          setState(() {
+            if (currentStroke.length > 1) {
+              strokes.add(List.from(currentStroke));
+            }
+            currentStroke = [];
+          });
+        },
         child: CustomPaint(
           size: Size.infinite,
-          painter: DrawingPainter(strokes: strokes, shouldDrawContinue: shouldDrawContinue),
+          painter: DrawingPainter(
+            strokes: strokes,
+            currentStroke: currentStroke,
+            selectedIndex: selectedStrokeIndex,
+          ),
         ),
       ),
     );
   }
+
+  void _handleUndo() {
+    setState(() {
+      if (selectedStrokeIndex != null) {
+        strokes.removeAt(selectedStrokeIndex!);
+        selectedStrokeIndex = null;
+      } else if (strokes.isNotEmpty) {
+        strokes.removeLast();
+      }
+    });
+  }
 }
 
 class DrawingPainter extends CustomPainter {
-  final List<Offset> strokes;
-  final bool shouldDrawContinue;
+  final List<List<Offset>> strokes;
+  final List<Offset> currentStroke;
+  final int? selectedIndex;
 
-  DrawingPainter({required this.strokes, required this.shouldDrawContinue});
+  DrawingPainter({
+    required this.strokes,
+    required this.currentStroke,
+    required this.selectedIndex,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = Colors.black
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = 4.0;
+    final blackPaint = Paint()
+      ..color = Colors.black
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 4.0;
 
-    for (int i = 0; i < strokes.length - 1; i++) {
-      canvas.drawLine(strokes[i], strokes[i + 1], paint);
+    final redPaint = Paint()
+      ..color = Colors.red
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 4.0;
+
+    for (int i = 0; i < strokes.length; i++) {
+      final paint = (i == selectedIndex) ? redPaint : blackPaint;
+      final stroke = strokes[i];
+      for (int j = 0; j < stroke.length - 1; j++) {
+        canvas.drawLine(stroke[j], stroke[j + 1], paint);
+      }
     }
-    if (!shouldDrawContinue) {
-      canvas.drawLine(strokes[strokes.length - 1], strokes[0], paint);
+
+    for (int i = 0; i < currentStroke.length - 1; i++) {
+      canvas.drawLine(currentStroke[i], currentStroke[i + 1], blackPaint);
     }
   }
 
