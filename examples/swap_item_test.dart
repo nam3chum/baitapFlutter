@@ -19,7 +19,6 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
   final double baseLeft = 20;
   final double baseTop = 50;
 
-  // Thay vì Map, dùng list 3 phần tử cho 3 cột
   final List<List<_CardData>> columns = List.generate(3, (_) => []);
 
   final List<_CardData> allCards = List.generate(
@@ -33,7 +32,7 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
   @override
   void initState() {
     super.initState();
-    columns[1].addAll(allCards); // Đặt tất cả thẻ vào cột giữa
+    columns[1].addAll(allCards);
     _updateCardPositions();
   }
 
