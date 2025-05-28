@@ -16,64 +16,74 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
   final double cardHeight = 80;
   final double spacing = 12;
   final double columnWidth = 140;
+  final double baseLeft = 20;
   final double baseTop = 50;
 
-  final List<_CardData> cards = List.generate(
+  // Thay vì Map, dùng list 3 phần tử cho 3 cột
+  final List<List<_CardData>> columns = List.generate(3, (_) => []);
+
+  final List<_CardData> allCards = List.generate(
     6,
-    (index) => _CardData(id: index, label: 'Thẻ ${index + 1}', position: Offset(0, 0)),
+        (i) => _CardData(id: i, label: 'Thẻ ${i + 1}'),
   );
 
   int? draggingId;
   Offset dragOffset = Offset.zero;
 
-  final Map<int, List<_CardData>> columnCards = {0: [], 1: [], 2: []};
-
   @override
   void initState() {
     super.initState();
-    columnCards[1]!.addAll(cards);
-    _recalculatePositions();
+    columns[1].addAll(allCards); // Đặt tất cả thẻ vào cột giữa
+    _updateCardPositions();
   }
 
-  void _recalculatePositions() {
+  void _updateCardPositions() {
     for (int col = 0; col < 3; col++) {
-      final x = 20 + col * columnWidth;
-      final list = columnCards[col]!;
-      for (int i = 0; i < list.length; i++) {
-        list[i].position = Offset(x, baseTop + i * (cardHeight + spacing));
+      double x = baseLeft + col * columnWidth;
+      for (int i = 0; i < columns[col].length; i++) {
+        columns[col][i].position = Offset(x, baseTop + i * (cardHeight + spacing));
       }
     }
   }
 
-  int _getColumnFromX(double xCenter) {
-    if (xCenter < columnWidth) return 0;
-    if (xCenter < 2 * columnWidth) return 1;
-    return 2;
+  int _getClosestColumn(double xCenter) {
+    final centers = List.generate(3, (i) => baseLeft + i * columnWidth + cardWidth / 2);
+    double minDist = double.infinity;
+    int closestCol = 0;
+    for (int i = 0; i < centers.length; i++) {
+      final dist = (xCenter - centers[i]).abs();
+      if (dist < minDist) {
+        minDist = dist;
+        closestCol = i;
+      }
+    }
+    return closestCol;
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
+          // Màu nền từng cột
           Positioned.fill(
             child: Row(
               children: [
-                Expanded(child: Container(color: Colors.red.withValues(alpha: 0.2))),
-                Expanded(child: Container(color: Colors.green.withValues(alpha: 0.2))),
-                Expanded(child: Container(color: Colors.blue.withValues(alpha: 0.2))),
+                Expanded(child: Container(color: Colors.red.withOpacity(0.1))),
+                Expanded(child: Container(color: Colors.green.withOpacity(0.1))),
+                Expanded(child: Container(color: Colors.blue.withOpacity(0.1))),
               ],
             ),
           ),
 
-          ...[...columnCards.values.expand((e) => e)].map((card) {
-            final isDragging = card.id == draggingId;
-            final displayPos = isDragging ? dragOffset : card.position;
+          // Hiển thị các thẻ
+          ...columns.expand((col) => col).map((card) {
+            final isDragging = draggingId == card.id;
+            final pos = isDragging ? dragOffset : card.position;
 
             return Positioned(
-              left: displayPos.dx,
-              top: displayPos.dy,
+              left: pos.dx,
+              top: pos.dy,
               child: GestureDetector(
                 onPanStart: (_) {
                   setState(() {
@@ -87,21 +97,23 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
                   });
                 },
                 onPanEnd: (_) {
+                  final draggedCard = allCards.firstWhere((c) => c.id == draggingId);
+                  final centerX = dragOffset.dx + cardWidth / 2;
+                  final targetCol = _getClosestColumn(centerX);
+
                   setState(() {
-                    final draggedCard = cards.firstWhere((c) => c.id == draggingId);
-                    final xCenter = dragOffset.dx + cardWidth / 2;
-                    final targetCol = _getColumnFromX(xCenter);
-
-                    for (var list in columnCards.values) {
-                      list.remove(draggedCard);
+                    for (final col in columns) {
+                      col.remove(draggedCard);
                     }
-                    columnCards[targetCol]!.add(draggedCard);
-                    _recalculatePositions();
-
+                    columns[targetCol].add(draggedCard);
+                    _updateCardPositions();
                     draggingId = null;
                   });
                 },
-                child: Opacity(opacity: isDragging ? 0.9 : 1.0, child: _buildCard(card.label)),
+                child: Opacity(
+                  opacity: isDragging ? 0.85 : 1,
+                  child: _buildCard(card.label),
+                ),
               ),
             );
           }),
@@ -110,17 +122,17 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
     );
   }
 
-  Widget _buildCard(String text) {
+  Widget _buildCard(String label) {
     return Container(
       width: cardWidth,
       height: cardHeight,
       decoration: BoxDecoration(
         color: Colors.blue[700],
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+        boxShadow: const [BoxShadow(blurRadius: 4, color: Colors.black26)],
       ),
       alignment: Alignment.center,
-      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 20)),
+      child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 20)),
     );
   }
 }
@@ -130,5 +142,5 @@ class _CardData {
   final String label;
   Offset position;
 
-  _CardData({required this.id, required this.label, required this.position});
+  _CardData({required this.id, required this.label, this.position = Offset.zero});
 }
