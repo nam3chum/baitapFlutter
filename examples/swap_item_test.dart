@@ -19,12 +19,10 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
   final double baseLeft = 20;
   final double baseTop = 50;
 
+  //tạo list chứa 3 danh sách các item (côi mỗi danh sách là 1 cột)
   final List<List<_CardData>> columns = List.generate(3, (_) => []);
 
-  final List<_CardData> allCards = List.generate(
-    6,
-        (i) => _CardData(id: i, label: 'Thẻ ${i + 1}'),
-  );
+  final List<_CardData> allCards = List.generate(6, (i) => _CardData(id: i, label: 'Thẻ ${i + 1}'));
 
   int? draggingId;
   Offset dragOffset = Offset.zero;
@@ -32,10 +30,12 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
   @override
   void initState() {
     super.initState();
+    //Thêm các item vào cột thứ 2
     columns[1].addAll(allCards);
     _updateCardPositions();
   }
 
+  // Cập nhật vị trị mới cho item
   void _updateCardPositions() {
     for (int col = 0; col < 3; col++) {
       double x = baseLeft + col * columnWidth;
@@ -45,6 +45,7 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
     }
   }
 
+  //Đo khoảng cách với cột gần nhất
   int _getClosestColumn(double xCenter) {
     final centers = List.generate(3, (i) => baseLeft + i * columnWidth + cardWidth / 2);
     double minDist = double.infinity;
@@ -68,9 +69,9 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
           Positioned.fill(
             child: Row(
               children: [
-                Expanded(child: Container(color: Colors.red.withOpacity(0.1))),
-                Expanded(child: Container(color: Colors.green.withOpacity(0.1))),
-                Expanded(child: Container(color: Colors.blue.withOpacity(0.1))),
+                Expanded(child: Container(color: Colors.red.withValues(alpha: 0.1))),
+                Expanded(child: Container(color: Colors.green.withValues(alpha: 0.1))),
+                Expanded(child: Container(color: Colors.blue.withValues(alpha: 0.1))),
               ],
             ),
           ),
@@ -109,10 +110,7 @@ class _VerticalCardSwapDemoState extends State<VerticalCardSwapDemo> {
                     draggingId = null;
                   });
                 },
-                child: Opacity(
-                  opacity: isDragging ? 0.85 : 1,
-                  child: _buildCard(card.label),
-                ),
+                child: Opacity(opacity: isDragging ? 0.85 : 1, child: _buildCard(card.label)),
               ),
             );
           }),
